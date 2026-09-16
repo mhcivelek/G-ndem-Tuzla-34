@@ -1,0 +1,6 @@
+{
+  "name": "Gündem Tuzla 34",
+  "description": "Tuzla ve İstanbul'un en güncel yerel ve ulusal haber portalı. Son dakika gelişmeleri, tarafsız yayıncılık ve zengin dijital medya deneyimi.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
