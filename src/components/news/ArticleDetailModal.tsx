@@ -67,9 +67,12 @@ export const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({
     };
   }, []);
 
+  const [speechWarning, setSpeechWarning] = useState('');
+
   const handleToggleSpeech = () => {
-    if (!('speechSynthesis' in window)) {
-      alert('Tarayıcınız sesli okuma özelliğini desteklemiyor.');
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setSpeechWarning('Tarayıcınız veya ortam sesli okuma özelliğini desteklemiyor.');
+      setTimeout(() => setSpeechWarning(''), 4000);
       return;
     }
 
@@ -190,6 +193,11 @@ export const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({
 
         {/* Scrollable Reader Content */}
         <div className="overflow-y-auto px-4 sm:px-8 py-6 space-y-6 flex-1">
+          {speechWarning && (
+            <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-2.5 rounded-lg text-xs font-semibold">
+              {speechWarning}
+            </div>
+          )}
           {/* Article Title */}
           <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
             {news.title}

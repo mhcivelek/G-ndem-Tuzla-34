@@ -47,6 +47,7 @@ export const NewsEditorModal: React.FC<NewsEditorModalProps> = ({
   );
   const [tagsInput, setTagsInput] = useState(editingNews?.tags?.join(', ') || 'Tuzla, İstanbul, Gündem');
   const [isHeadline, setIsHeadline] = useState(editingNews?.isHeadline ?? true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [adEnabled, setAdEnabled] = useState(editingNews?.adEnabled ?? true);
   const [seoTitle, setSeoTitle] = useState(editingNews?.seoTitle || '');
   const [seoDescription, setSeoDescription] = useState(editingNews?.seoDescription || '');
@@ -57,9 +58,10 @@ export const NewsEditorModal: React.FC<NewsEditorModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
-      alert('Lütfen haber başlığı ve içerik alanını doldurun.');
+      setErrorMessage('Lütfen haber başlığı ve içerik alanını doldurun.');
       return;
     }
+    setErrorMessage('');
 
     const tags = tagsInput
       .split(',')
@@ -133,6 +135,12 @@ export const NewsEditorModal: React.FC<NewsEditorModalProps> = ({
 
         {/* Modal Form */}
         <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-5 flex-1 text-xs sm:text-sm">
+          {errorMessage && (
+            <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-3 rounded-lg text-xs font-semibold">
+              {errorMessage}
+            </div>
+          )}
+
           {/* Main Title & Spot */}
           <div className="space-y-4">
             <div>

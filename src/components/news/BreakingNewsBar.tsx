@@ -17,22 +17,53 @@ import {
 import { BreakingNews } from '../../types';
 
 interface BreakingNewsBarProps {
-  breakingList: BreakingNews[];
-  onSelectBreakingNews: (item: BreakingNews) => void;
+  breakingList?: BreakingNews[];
+  items?: BreakingNews[];
+  onSelectBreakingNews?: (item: BreakingNews) => void;
+  onSelectBreaking?: (item: BreakingNews) => void;
   onOpenBreakingNewsEditor?: () => void;
+  onOpenFastEntry?: () => void;
+  viewMode?: 'horizontal' | 'vertical' | 'ticker' | 'stream';
+  onToggleViewMode?: () => void;
 }
 
 export const BreakingNewsBar: React.FC<BreakingNewsBarProps> = ({
   breakingList,
+  items,
   onSelectBreakingNews,
+  onSelectBreaking,
   onOpenBreakingNewsEditor,
+  onOpenFastEntry,
+  viewMode: controlledViewMode,
+  onToggleViewMode,
 }) => {
-  const activeItems = breakingList.filter((b) => b.active);
+  const list = breakingList || items || [];
+  const activeItems = Array.isArray(list) ? list.filter((b) => b && b.active) : [];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  // View mode: 'horizontal' (ticker bar) or 'vertical' (stream card)
-  const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
+  // Internal or external view mode: 'horizontal' | 'vertical'
+  const [internalViewMode, setInternalViewMode] = useState<'horizontal' | 'vertical'>('horizontal');
+
+  const viewMode = controlledViewMode
+    ? (controlledViewMode === 'ticker' || controlledViewMode === 'horizontal' ? 'horizontal' : 'vertical')
+    : internalViewMode;
+
+  const handleSelect = (item: BreakingNews) => {
+    (onSelectBreakingNews || onSelectBreaking)?.(item);
+  };
+
+  const handleOpenEditor = () => {
+    (onOpenBreakingNewsEditor || onOpenFastEntry)?.();
+  };
+
+  const toggleView = () => {
+    if (onToggleViewMode) {
+      onToggleViewMode();
+    } else {
+      setInternalViewMode((prev) => (prev === 'horizontal' ? 'vertical' : 'horizontal'));
+    }
+  };
 
   // Auto cycle in horizontal mode
   useEffect(() => {
@@ -85,7 +116,7 @@ export const BreakingNewsBar: React.FC<BreakingNewsBarProps> = ({
           {/* Ticker Content */}
           <div 
             className="flex-1 overflow-hidden cursor-pointer group"
-            onClick={() => onSelectBreakingNews(currentItem)}
+            onClick={() => handleSelect(currentItem)}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
@@ -135,8 +166,8 @@ export const BreakingNewsBar: React.FC<BreakingNewsBarProps> = ({
             {/* Switch to Vertical View Button */}
             <button
               id="toggle-breaking-vertical-btn"
-              onClick={() => setViewMode('vertical')}
-              className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2 py-1 rounded transition border border-slate-700 ml-1"
+              onClick={toggleView}
+              className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2 py-1 rounded transition border border-slate-700 ml-1 cursor-pointer"
               title="Dikey Son Dakika Akışına Geç (Liste Görünümü)"
             >
               <Rows className="w-3.5 h-3.5 text-red-400" />
@@ -159,18 +190,16 @@ export const BreakingNewsBar: React.FC<BreakingNewsBarProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {onOpenBreakingNewsEditor && (
-                <button
-                  onClick={onOpenBreakingNewsEditor}
-                  className="bg-red-700 hover:bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded transition"
-                >
-                  + Yeni Giriş
-                </button>
-              )}
+              <button
+                onClick={handleOpenEditor}
+                className="bg-red-700 hover:bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded transition cursor-pointer"
+              >
+                + Yeni Giriş
+              </button>
               <button
                 id="toggle-breaking-horizontal-btn"
-                onClick={() => setViewMode('horizontal')}
-                className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1 rounded border border-slate-700"
+                onClick={toggleView}
+                className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1 rounded border border-slate-700 cursor-pointer"
                 title="Yatay Kayan Banda Dön"
               >
                 <Columns className="w-3.5 h-3.5 text-blue-400" />
@@ -184,7 +213,7 @@ export const BreakingNewsBar: React.FC<BreakingNewsBarProps> = ({
             {activeItems.map((item) => (
               <div
                 key={item.id}
-                onClick={() => onSelectBreakingNews(item)}
+                onClick={() => handleSelect(item)}
                 className="bg-slate-800/80 hover:bg-slate-800 p-3.5 rounded-lg border border-slate-700/80 hover:border-red-500/80 transition-all cursor-pointer group flex flex-col justify-between"
               >
                 <div>

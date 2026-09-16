@@ -61,6 +61,25 @@ export default function App() {
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [showMobileBottomAd, setShowMobileBottomAd] = useState(true);
 
+  // Dark Mode State with document class syncing
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark' ||
+        (!localStorage.getItem('theme') && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
   // Load initial data from Storage Service
   const refreshAllData = () => {
     setNewsList(storageService.getNews());
@@ -100,7 +119,7 @@ export default function App() {
   const headlineBottomAd = ads.find((a) => a.location === 'headline_bottom');
   const sidebarAd = ads.find((a) => a.location === 'sidebar_sticky');
   const inArticleAd = ads.find((a) => a.location === 'in_article');
-  const mobileBottomAd = ads.find((a) => a.location === 'mobile_bottom_sticky');
+  const mobileBottomAd = ads.find((a) => a.location === 'mobile_bottom');
 
   const handleSelectBreakingItem = (item: BreakingNews) => {
     // If breaking news matches a news item, open it, or create a quick preview modal
@@ -146,23 +165,41 @@ export default function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         currentUser={currentUser}
+        onChangeUserRole={(role) => {
+          if (CURRENT_ROLES[role]) {
+            setCurrentUser(CURRENT_ROLES[role]);
+          } else {
+            setCurrentUser((prev) => ({ ...prev, role }));
+          }
+        }}
         onSelectUserRole={setCurrentUser}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenAdmin={() => setIsAdminDashboardOpen(true)}
+        onOpenAdminPanel={() => setIsAdminDashboardOpen(true)}
         onOpenNewsEditor={() => {
           setEditingNewsItem(null);
           setIsNewsEditorOpen(true);
         }}
         onOpenBreakingModal={() => setIsBreakingModalOpen(true)}
+        onOpenBreakingNewsEditor={() => setIsBreakingModalOpen(true)}
         onOpenNotifications={() => setIsNotificationModalOpen(true)}
         onOpenDocs={() => setIsDocsModalOpen(true)}
+        onOpenSearch={() => {
+          const searchInput = document.querySelector('input[placeholder*="ara"]') as HTMLInputElement;
+          if (searchInput) searchInput.focus();
+        }}
       />
 
       {/* Breaking News Bar (Dual Mode: Horizontal Ticker & Vertical Stream) */}
       <BreakingNewsBar
+        breakingList={breakingList}
         items={breakingList}
         viewMode={breakingViewMode}
         onToggleViewMode={() => setBreakingViewMode((prev) => (prev === 'ticker' ? 'stream' : 'ticker'))}
+        onSelectBreakingNews={handleSelectBreakingItem}
         onSelectBreaking={handleSelectBreakingItem}
+        onOpenBreakingNewsEditor={() => setIsBreakingModalOpen(true)}
         onOpenFastEntry={() => setIsBreakingModalOpen(true)}
       />
 
@@ -304,6 +341,7 @@ export default function App() {
                     key={news.id}
                     news={news}
                     category={CATEGORIES.find((c) => c.id === news.category)}
+                    onSelectNews={setSelectedNews}
                     onSelect={setSelectedNews}
                   />
                 ))}

@@ -24,15 +24,20 @@ interface HeaderProps {
   activeCategory: CategoryId;
   onSelectCategory: (id: CategoryId) => void;
   currentUser: CurrentUser;
-  onChangeUserRole: (role: UserRole) => void;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
-  onOpenNewsEditor: () => void;
-  onOpenBreakingNewsEditor: () => void;
-  onOpenNotifications: () => void;
-  onOpenDocs: () => void;
-  onOpenSearch: () => void;
-  onOpenAdminPanel: (tab?: string) => void;
+  onChangeUserRole?: (role: UserRole) => void;
+  onSelectUserRole?: (user: CurrentUser) => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  onOpenNewsEditor?: () => void;
+  onOpenBreakingNewsEditor?: () => void;
+  onOpenBreakingModal?: () => void;
+  onOpenNotifications?: () => void;
+  onOpenDocs?: () => void;
+  onOpenSearch?: () => void;
+  onOpenAdminPanel?: (tab?: string) => void;
+  onOpenAdmin?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   unreadNotificationsCount?: number;
   headerAdSlot?: React.ReactNode;
 }
@@ -43,20 +48,58 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectCategory,
   currentUser,
   onChangeUserRole,
-  isDarkMode,
+  onSelectUserRole,
+  isDarkMode = false,
   onToggleDarkMode,
   onOpenNewsEditor,
   onOpenBreakingNewsEditor,
+  onOpenBreakingModal,
   onOpenNotifications,
   onOpenDocs,
   onOpenSearch,
   onOpenAdminPanel,
+  onOpenAdmin,
+  searchQuery = '',
+  onSearchChange,
   unreadNotificationsCount = 2,
   headerAdSlot,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState('');
+  const [isSearchInputOpen, setIsSearchInputOpen] = useState(false);
+
+  const handleRoleChange = (role: UserRole) => {
+    if (onChangeUserRole) {
+      onChangeUserRole(role);
+    } else if (onSelectUserRole) {
+      // Create user object if needed
+      onSelectUserRole({
+        ...currentUser,
+        role,
+      });
+    }
+  };
+
+  const handleBreakingClick = () => {
+    (onOpenBreakingNewsEditor || onOpenBreakingModal)?.();
+  };
+
+  const handleAdminClick = (tab?: string) => {
+    if (onOpenAdminPanel) {
+      onOpenAdminPanel(tab);
+    } else if (onOpenAdmin) {
+      onOpenAdmin();
+    }
+  };
+
+  const handleSearchClick = () => {
+    if (onOpenSearch) {
+      onOpenSearch();
+    } else {
+      setIsSearchInputOpen((prev) => !prev);
+    }
+  };
 
   useEffect(() => {
     const now = new Date();
@@ -140,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({
                   {rolesList.map((r) => (
                     <button
                       key={r.role}
-                      onClick={() => onChangeUserRole(r.role)}
+                      onClick={() => handleRoleChange(r.role)}
                       className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700 transition ${
                         currentUser.role === r.role ? 'font-bold text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30' : 'text-slate-700 dark:text-slate-200'
                       }`}
@@ -209,22 +252,42 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right CTA Actions */}
         <div className="flex items-center gap-2">
-          {/* Quick Search Button */}
-          <button
-            id="quick-search-btn"
-            onClick={onOpenSearch}
-            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition flex items-center gap-1.5 text-xs font-medium cursor-pointer"
-            title="Haberlerde Ara (Ctrl + K)"
-          >
-            <Search className="w-4 h-4" />
-            <span className="hidden md:inline">Ara...</span>
-          </button>
+          {/* Quick Search Button & Input */}
+          {isSearchInputOpen ? (
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-700 animate-in fade-in duration-150">
+              <Search className="w-3.5 h-3.5 text-slate-400 mr-1.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="Haber ara..."
+                className="bg-transparent text-xs text-slate-800 dark:text-slate-100 focus:outline-hidden w-28 sm:w-44"
+                autoFocus
+              />
+              <button
+                onClick={() => setIsSearchInputOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 ml-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              id="quick-search-btn"
+              onClick={handleSearchClick}
+              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+              title="Haberlerde Ara"
+            >
+              <Search className="w-4 h-4" />
+              <span className="hidden md:inline">Ara...</span>
+            </button>
+          )}
 
           {/* Dedicated Fast Breaking News Button (Ayrı Giriş) - Permission restricted */}
           {(currentUser.role === 'super_admin' || currentUser.role === 'editor' || currentUser.role === 'reporter') && (
             <button
               id="fast-breaking-news-btn"
-              onClick={onOpenBreakingNewsEditor}
+              onClick={handleBreakingClick}
               className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3 py-2 rounded-lg shadow-xs transition hover:shadow cursor-pointer animate-pulse"
               title="Ayrı Hızlı Son Dakika Haberi Girişi"
             >
@@ -250,7 +313,7 @@ export const Header: React.FC<HeaderProps> = ({
           {(currentUser.role === 'super_admin' || currentUser.role === 'editor' || currentUser.role === 'moderator') && (
             <button
               id="admin-management-btn"
-              onClick={() => onOpenAdminPanel()}
+              onClick={() => handleAdminClick()}
               className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition text-xs font-semibold flex items-center gap-1 cursor-pointer"
               title="Yönetim & Moderasyon Paneli"
             >

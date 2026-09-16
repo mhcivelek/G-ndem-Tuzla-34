@@ -5,7 +5,8 @@ import { NewsItem, Category } from '../../types';
 interface NewsCardProps {
   news: NewsItem;
   category?: Category;
-  onSelectNews: (news: NewsItem) => void;
+  onSelectNews?: (news: NewsItem) => void;
+  onSelect?: (news: NewsItem) => void;
   variant?: 'standard' | 'compact' | 'featured';
 }
 
@@ -13,15 +14,20 @@ export const NewsCard: React.FC<NewsCardProps> = ({
   news,
   category,
   onSelectNews,
+  onSelect,
   variant = 'standard',
 }) => {
+  const handleCardClick = () => {
+    (onSelectNews || onSelect)?.(news);
+  };
+
   const categoryName = category?.name || news.category;
   const categoryColor = category?.color || 'bg-slate-700';
 
   if (variant === 'compact') {
     return (
       <article
-        onClick={() => onSelectNews(news)}
+        onClick={handleCardClick}
         className="flex gap-3 items-center group cursor-pointer p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors border-b border-slate-100 dark:border-slate-800/80 last:border-0"
       >
         <div className="w-20 h-16 shrink-0 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 relative">
@@ -55,7 +61,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
 
   return (
     <article
-      onClick={() => onSelectNews(news)}
+      onClick={handleCardClick}
       className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-lg transition-all duration-300 group cursor-pointer flex flex-col justify-between"
     >
       <div>

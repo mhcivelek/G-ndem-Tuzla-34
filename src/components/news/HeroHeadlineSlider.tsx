@@ -14,19 +14,27 @@ import { NewsItem, Category } from '../../types';
 interface HeroHeadlineSliderProps {
   headlineNews: NewsItem[];
   categories: Category[];
-  onSelectNews: (news: NewsItem) => void;
+  onSelectNews?: (news: NewsItem) => void;
+  onSelect?: (news: NewsItem) => void;
 }
 
 export const HeroHeadlineSlider: React.FC<HeroHeadlineSliderProps> = ({
-  headlineNews,
-  categories,
+  headlineNews = [],
+  categories = [],
   onSelectNews,
+  onSelect,
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const slides = headlineNews.slice(0, 10);
+  const slides = Array.isArray(headlineNews) ? headlineNews.slice(0, 10) : [];
   const currentSlide = slides[activeIndex] || slides[0];
+
+  const handleSlideSelect = () => {
+    if (currentSlide) {
+      (onSelectNews || onSelect)?.(currentSlide);
+    }
+  };
 
   useEffect(() => {
     if (slides.length <= 1 || isHovered) return;
@@ -51,7 +59,7 @@ export const HeroHeadlineSlider: React.FC<HeroHeadlineSliderProps> = ({
       {/* Main Feature Slide Stage */}
       <div 
         className="relative h-[340px] sm:h-[420px] md:h-[480px] w-full overflow-hidden cursor-pointer"
-        onClick={() => onSelectNews(currentSlide)}
+        onClick={handleSlideSelect}
       >
         {/* Background Cover Image with Zoom Effect */}
         <img
